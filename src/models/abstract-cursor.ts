@@ -38,30 +38,43 @@ export abstract class AbstractCursor<TSchema> implements ICursor<TSchema> {
         this[kSource] = isIterable(source) ? toAsyncIterable(source) : source;
     }
 
+    // TODO: find better solution for sync iterator
     [Symbol.iterator](): Iterator<TSchema> {
-        return undefined;
+        return {
+            next: (): IteratorResult<TSchema, any> => {
+                if (this[kDocuments].length < this.currentIndex) {
+                    return {done: false, value: this[kDocuments][this.currentIndex++]};
+                }
+                return {done: true, value: undefined};
+            }
+        };
     }
 
     [Symbol.asyncIterator](): AsyncIterator<TSchema> {
-        return undefined;
+        throw new Error('implement it');
     }
 
     clone(): ICursor<TSchema> {
-        return undefined;
+        throw new Error('implement it');
     }
 
     close(callback?: Callback): Promise<void> {
-        return Promise.resolve(undefined);
+        console.log(callback);
+        throw new Error('implement it');
+        // return Promise.resolve(undefined);
     }
 
     forEach(iterator: (doc: TSchema) => boolean, callback?: Callback<void>): Promise<void> {
-        return Promise.resolve(undefined);
+        console.log(iterator, callback);
+        throw new Error('implement it');
+        // return Promise.resolve(undefined);
     }
 
     abstract hasNext(callback?: Callback<boolean>): Promise<boolean>;
 
     map<T = any>(transform: (doc: TSchema) => T): ICursor<T> {
-        return undefined;
+        console.log(transform);
+        throw new Error('implement it');
     }
 
     abstract next(callback?: Callback<TSchema | null>): Promise<TSchema | null>;
@@ -70,7 +83,8 @@ export abstract class AbstractCursor<TSchema> implements ICursor<TSchema> {
     }
 
     stream(options?: ICursorStreamOptions): AsyncIterable<TSchema> {    // TODO: add Readable return
-        return undefined;
+        console.log(options);
+        throw new Error('implement it');
     }
 
     async toArray(callback?: Callback<TSchema[]>): Promise<TSchema[]> {
@@ -83,7 +97,7 @@ export abstract class AbstractCursor<TSchema> implements ICursor<TSchema> {
             if (callback) {
                 callback(undefined, result);
             }
-        } catch () {
+        } catch (_) {
             if (callback) {
                 callback(new Error(`Can't parse cursor to array`), result);
             }
@@ -93,7 +107,9 @@ export abstract class AbstractCursor<TSchema> implements ICursor<TSchema> {
     }
 
     tryNext(callback?: Callback<TSchema | null>): Promise<TSchema | null> {
-        return Promise.resolve(undefined);
+        console.log(callback);
+        throw new Error('implement it');
+        // return Promise.resolve(undefined);
     }
 
 }

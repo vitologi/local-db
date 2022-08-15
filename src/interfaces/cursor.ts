@@ -1,5 +1,5 @@
 import { Callback } from "../types/callback";
-import { Readable } from "stream";
+// import { Readable } from "stream";
 
 type Document = object;
 
@@ -21,7 +21,7 @@ export interface ICursor<TSchema> extends AsyncIterable<TSchema>, Iterable<TSche
     forEach(iterator: (doc: TSchema) => boolean, callback?: Callback<void>): Promise<void>;
     close(callback?: Callback): Promise<void>;
     rewind(): void;
-    stream(options?: ICursorStreamOptions): Readable & AsyncIterable<TSchema>;
+    stream(options?: ICursorStreamOptions): AsyncIterable<TSchema>; //  Readable &
 
     // TODO: implement it later
     // maxTimeMS	(value: number): this
