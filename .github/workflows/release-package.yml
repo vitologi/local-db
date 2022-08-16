@@ -38,15 +38,15 @@ jobs:
       - name: 'Change NPM version'
         uses: reedyuk/npm-version@1.1.1
         with:
+          git-tag-version: true
           version: $GITVERSION_SEMVER
           # Use the tag name: version: ${{github.event.release.tag_name}}
           # Access individual values from gitversion:
           # ${{ steps.gitversion.outputs.major }}
 
-
       - run: npm ci
       - run: npm test
       - run: npm run build --if-present
-      - run: npm publish
+      - run: npm publish --access=public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
