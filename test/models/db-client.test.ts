@@ -60,7 +60,6 @@ describe('DbClient', () => {
         await collection.insertOne({_id: '1', title: 'first row'});
         await collection.insertOne({_id: '2', title: 'second row'});
         items = await collection.find({});
-        console.log(items);
         expect(items).toHaveLength(2);
         expect(items[0].title).toBe('first row');
         expect(items[1].title).toBe('second row');
@@ -75,11 +74,7 @@ describe('DbClient', () => {
         await collection.insertOne({_id: '3', title: 'third row'});
         await collection.insertOne({_id: '4', title: 'forth row'});
 
-        const temp = await collection.find({});
-        console.log('temp', temp);
-
         items = await collection.find({_id: {$in: ['3', '4']}});
-        console.log(items);
         expect(items).toHaveLength(2);
         expect(items[0].title).toBe('third row');
         expect(items[1].title).toBe('forth row');

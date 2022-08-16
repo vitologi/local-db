@@ -38,8 +38,6 @@ export class IdbMigrationCommand {
         this.setStatus(CommandStatus.Completed);
       }
 
-      console.log('open idb');
-
       // old connection wasn't closed
       openRequest.onblocked = (event: Event) => {
         alert('There are old running application copies, please close them.');
@@ -52,11 +50,9 @@ export class IdbMigrationCommand {
 
       openRequest.onsuccess = () => {
         const idb = openRequest.result;
-        console.log('idb success');
         // update database in other tab handler (parallel update) or in multiple migrations
         idb.onversionchange = () => {
           idb.close();
-          console.log('idb onversionchange');
           // if (confirm('Database has been upgraded. Do you want to reload page?')) {
           //   window.location.reload();
           // }
@@ -66,7 +62,6 @@ export class IdbMigrationCommand {
           return;
         }
 
-        console.log('idb resolve by success');
         this.setIdb(idb);
         finalResolve();
       };
@@ -78,12 +73,10 @@ export class IdbMigrationCommand {
         this.setIdb(idb);
         this.setTransaction(transaction);
 
-        console.log('migration start');
         this.up()
           .then(() => {
             console.log(`Db:${name} Version:${targetVersion} Status: migration base completed`);
             if (isSuccessFired) {
-              console.log('idb resolve by migration');
               finalResolve();
             }
           })
@@ -100,7 +93,6 @@ export class IdbMigrationCommand {
         if (transaction) {
           transaction.oncomplete = () => {
             this.setTransaction(null);
-            console.log('oncomplete transaction');
           }
         }
       };
