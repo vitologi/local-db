@@ -16,28 +16,6 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: 'Automated Version Bump'
-        uses: 'phips28/gh-action-bump-version@master'
-        id: version-bump
-        with:
-          tag-prefix: 'v'
-          minor-wording: '[minor]'
-          major-wording: '[major]'
-          patch-wording: '[patch]'     # Providing patch-wording will override commits
-          # defaulting to a patch bump.
-          rc-wording: '[release]'
-          skip-tag:  false
-          skip-commit: true
-          skip-push: true
-          target-branch: 'main'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 'Output Step'
-        env:
-          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
-        run: echo "new tag $NEW_TAG"
-
       # Setup .npmrc file to publish to npm
       - name: 'Publish package'
         uses: actions/setup-node@v3

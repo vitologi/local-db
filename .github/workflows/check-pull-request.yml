@@ -33,7 +33,7 @@ jobs:
           patch-wording: '[patch]'     # Providing patch-wording will override commits
           # defaulting to a patch bump.
           rc-wording: '[release]'
-          skip-tag: true
+          skip-tag: false
           skip-commit: false
           skip-push: false
           commit-message: 'CI: bumps version to {{version}} [skip ci]'
