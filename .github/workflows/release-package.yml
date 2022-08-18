@@ -17,8 +17,8 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: 'Automated Version Bump'
-        id: version-bump
         uses: 'phips28/gh-action-bump-version@master'
+        id: version-bump
         with:
           tag-prefix: ''
           minor-wording: '[minor]'
@@ -37,7 +37,7 @@ jobs:
       - name: 'Output Step'
         env:
           NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
-          run: echo "new tag $NEW_TAG"
+        run: echo "new tag $NEW_TAG"
 
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
