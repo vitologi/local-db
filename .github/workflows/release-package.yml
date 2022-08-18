@@ -2,52 +2,49 @@ name: Node.js Package
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - 'main'
 
 jobs:
   build:
+    name: 'Bump Version on main'
     runs-on: ubuntu-latest
-    steps:
-      # You need a shallow clone for GitVersion to work.
-      # That's done specifying fetch-depth: 0
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      - name: Setup git user
-        run: |
-          git config --global user.name "Vitologi"
-          git config --global user.email "vitologi@gmail.com"
+    steps:
+      - name: 'Checkout source code'
+        uses: 'actions/checkout@v2'
+        with:
+          ref: ${{ github.ref }}
+
+      - name: 'Automated Version Bump'
+        uses: 'phips28/gh-action-bump-version@master'
+        id: version-bump
+        with:
+          tag-prefix: ''
+          minor-wording: '[minor]'
+          major-wording: '[major]'
+          patch-wording: '[patch]'     # Providing patch-wording will override commits
+          # defaulting to a patch bump.
+          rc-wording: '[release]'
+          skip-tag:  false
+          skip-commit: false
+          skip-push: false
+          target-branch: 'main'
+          commit-message: 'CI: bumps version to {{version}} [skip ci]'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Output Step'
+        env:
+          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+        run: echo "new tag $NEW_TAG"
 
       # Setup .npmrc file to publish to npm
-      - uses: actions/setup-node@v3
+      - name: 'Publish package'
+        uses: actions/setup-node@v3
         with:
           node-version: 12
           registry-url: 'https://registry.npmjs.org'
-
-      # Install GitVersion to automatically create a semantic
-      # version from your repository:
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.7
-        with:
-          versionSpec: '5.x'
-
-      # Run GitVersion (set an ID to later fetch values)
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v0.9.7
-
-      # Now  happens the magic where you set the id of your package the default
-      # would be $GITVERSION_SEMVER. But you could also use teh tag name
-      # or access individual values from the gitversion task:
-      - name: 'Change NPM version'
-        uses: reedyuk/npm-version@1.1.1
-        with:
-          git-tag-version: true
-          version: $GITVERSION_SEMVER
-          # Use the tag name: version: ${{github.event.release.tag_name}}
-          # Access individual values from gitversion:
-          # ${{ steps.gitversion.outputs.major }}
 
       - run: npm ci
       - run: npm test
