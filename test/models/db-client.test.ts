@@ -1,10 +1,5 @@
-import { IDb, IDbClient, IDbMigration } from "../../src/interfaces";
-import { DbClient } from "../../src/models/db-client";
-
 import 'fake-indexeddb/auto';
-import { DbStatus } from "../../src";
-import { Db } from "../../src/models/db";
-import { IndexedDbProvider } from "../../src/models/idb/indexed-db-provider";
+import { IndexedDbProvider, Db, DbStatus, DbClient, IDb, IDbClient, IDbMigration } from "../../src";
 
 interface ITestItem {
     _id: string;
