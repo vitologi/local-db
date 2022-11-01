@@ -1,21 +1,21 @@
 import { IDb, IDbMigration, IDbOptions } from '../interfaces';
-import { IndexedDbProvider } from "../models/idb/indexed-db-provider";
-import { DbClient } from "../models/db-client";
+import { DbClient, IndexedDbProvider } from "../models";
 import { migrationsToProviderMigrations } from "./migrations-to-provider-migrations";
 
 export function parseDbOptions(db: IDb, options?: Partial<IDbOptions>): IDbOptions {
-    const resultOptions = Object.assign({
+    let {name,client,migrations,provider} = Object.assign({
         name: 'db',
         migrations: [] as IDbMigration[],
         client: new DbClient(), // TODO: generate singleton for client
     }, options);
 
 
-    resultOptions.provider = resultOptions.provider || new IndexedDbProvider({
-        name: resultOptions.name,
-        migrations: migrationsToProviderMigrations(resultOptions.migrations, db),
-    });
+    if (typeof provider === 'function' || !provider) {
+        provider = new IndexedDbProvider({
+            name,
+            migrations: migrationsToProviderMigrations(migrations, db),
+        });
+    }
 
-    // TODO: fix this file include typescript bug
-    return resultOptions as IDbOptions;
+    return {name,client,migrations, provider};
 }
