@@ -13,6 +13,7 @@ import { TransactionType } from "../../enums/transaction-type";
 import { Callback } from "../../types/callback";
 import { InferIdType } from "../../types/mongo-types";
 import { IdbAsyncIterator } from "./idb-async-iterator";
+import { extendTransactionCallback } from "./extend-transaction-callback";
 
 export class IndexedDbProvider implements IDbProvider<IDBDatabase, IDBTransaction> {
     readonly name: string;
@@ -191,44 +192,60 @@ export class IndexedDbProvider implements IDbProvider<IDBDatabase, IDBTransactio
         const {collection} = Object.assign({collection: this.name}, options || {});
         const store = await this.getIdbStore(collection, TransactionType.ReadWrite);
         const transaction = store.transaction;
-        const operations: Promise<InferIdType<TSchema>>[] = [];
+        // const operations: Promise<InferIdType<TSchema>>[] = [];
 
-        for (let i = 0; i < values.length; i++) {
-            operations.push(new Promise(((resolve, reject) => {
-                const request = store.add(values[i]);
-                request.onerror = reject;
-                request.onsuccess = function () {
-                    resolve(this.result as InferIdType<TSchema>);
-                };
-            })))
-        }
+        // for (let i = 0; i < values.length; i++) {
+        //     operations.push(new Promise(((resolve, reject) => {
+        //         const request = store.add(values[i]);
+        //         request.onerror = reject;
+        //         // TODO: operations will be success only if transaction is completed
+        //         request.onsuccess = function () {
+        //             resolve(this.result as InferIdType<TSchema>);
+        //         };
+        //     })))
+        // }
 
         return new Promise(async (resolve, reject) => {
-            let result: IInsertResult<TSchema>;
+            let result: IInsertResult<TSchema> = {insertedCount: 0, insertedIds: {}};
+            let err: unknown = null;
 
-            try {
-                result = {
-                    insertedCount: operations.length,
-                    insertedIds: {...await Promise.all(operations) as InferIdType<TSchema>[]},
-                };
-            } catch (err) {
-                result = {insertedCount: 0, insertedIds: {}};
-
+            // TODO: need to check all events and generate right errors
+            extendTransactionCallback(transaction, 'onerror', () => {
                 if (callback)
                     callback(err as Error, result);
-
-                reject(err);
-            }
-
-            transaction.onerror = transaction.onabort = () => {
-                if (callback)
-                    callback(new Error('Insert transaction emits an error'), result);
                 reject(result);
-            }
-            transaction.oncomplete = () => {
+            });
+
+            extendTransactionCallback(transaction, 'onabort', () => {
+                if (callback)
+                    callback(err as Error, result);
+                reject(result);
+            });
+
+            extendTransactionCallback(transaction, 'oncomplete', () => {
                 if (callback)
                     callback(undefined, result);
                 resolve(result);
+            });
+
+            try {
+                const items = values.concat();
+                const abortTransaction = () => transaction.abort();
+                const requestChainCall = () => {
+                    if (!items.length) {
+                        return;
+                    }
+                    const request = store.add(items.shift());
+                    request.onerror = abortTransaction;
+                    request.onsuccess = () => {
+                        result.insertedIds[result.insertedCount] = request.result as InferIdType<TSchema>;
+                        result.insertedCount++;
+                        requestChainCall();
+                    }
+                };
+                requestChainCall();
+            } catch (e) {
+                err = e;
             }
         });
     }
@@ -252,31 +269,37 @@ export class IndexedDbProvider implements IDbProvider<IDBDatabase, IDBTransactio
 
         return new Promise(async (resolve, reject) => {
             let result: IUpdateResult<TSchema>;
+            let err: unknown;
+
             try {
                 result = {
                     matchedCount: operations.length,
                     upsertedCount: operations.length,
                     upsertedIds: {...await Promise.all(operations)}
                 };
-            } catch (err) {
+            } catch (e) {
                 result = {matchedCount: 0, upsertedCount: 0, upsertedIds: {}};
+                err = e;
+            }
 
+            // TODO: need to check all events and generate right errors
+            extendTransactionCallback(transaction, 'onerror', () => {
                 if (callback)
                     callback(err as Error, result);
-
-                reject(err);
-            }
-
-            transaction.onerror = transaction.onabort = () => {
-                if (callback)
-                    callback(new Error('Update transaction emits an error'), result);
                 reject(result);
-            }
-            transaction.oncomplete = () => {
+            });
+
+            extendTransactionCallback(transaction, 'onabort', () => {
+                if (callback)
+                    callback(err as Error, result);
+                reject(result);
+            });
+
+            extendTransactionCallback(transaction, 'oncomplete', () => {
                 if (callback)
                     callback(undefined, result);
                 resolve(result);
-            }
+            });
         });
     }
 
@@ -286,6 +309,7 @@ export class IndexedDbProvider implements IDbProvider<IDBDatabase, IDBTransactio
         const store = await this.getIdbStore(collection, TransactionType.ReadWrite);
         const transaction = store.transaction;
         const operations: Promise<TId>[] = [];
+
 
         for (let i = 0; i < values.length; i++) {
             operations.push(new Promise(((resolve, reject) => {
@@ -299,27 +323,32 @@ export class IndexedDbProvider implements IDbProvider<IDBDatabase, IDBTransactio
 
         return new Promise(async (resolve, reject) => {
             let result: IDeleteResult;
+            let err: unknown;
 
-            try {
-                result = {deletedCount: (await Promise.all(operations)).length};
-            } catch (err) {
-                result = {deletedCount: 0};
-
+            // TODO: need to check all events and generate right errors
+            extendTransactionCallback(transaction, 'onerror', () => {
                 if (callback)
                     callback(err as Error, result);
-
-                reject(err);
-            }
-
-            transaction.onerror = transaction.onabort = () => {
-                if (callback)
-                    callback(new Error('Delete transaction emits an error'), result);
                 reject(result);
-            }
-            transaction.oncomplete = () => {
+            });
+
+            extendTransactionCallback(transaction, 'onabort', () => {
+                if (callback)
+                    callback(err as Error, result);
+                reject(result);
+            });
+
+            extendTransactionCallback(transaction, 'oncomplete', () => {
                 if (callback)
                     callback(undefined, result);
                 resolve(result);
+            });
+
+            try {
+                result = {deletedCount: (await Promise.all(operations)).length};
+            } catch (e) {
+                result = {deletedCount: 0};
+                err = e;
             }
         });
     }

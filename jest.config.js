@@ -12,5 +12,7 @@ module.exports = {
     },
     preset: "ts-jest",
     testMatch: ["**/__tests__/**/*.test.ts", "**/?(*.)+(spec|test).ts"],
+    setupFiles:['<rootDir>/jest.setup.js'],
+    verbose: true
 };
 // TODO: find out how testMatch works

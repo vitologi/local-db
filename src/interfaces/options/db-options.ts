@@ -6,5 +6,5 @@ export interface IDbOptions {
     name: string;
     provider: IDbProvider;
     client: IDbClient;
-    migrations: Array<IDbMigration>;
+    migrations: IDbMigration[];
 }

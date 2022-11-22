@@ -1,32 +1,12 @@
-import 'fake-indexeddb/auto';
 import { IndexedDbProvider, Db, DbStatus, DbClient, IDb, IDbClient, IDbMigration } from "../../src";
-
-interface ITestItem {
-    _id: string;
-    title: string;
-}
+import { ITestItem } from '../mocks/test-item.interface';
+import { generateMigration } from "../mocks/generate-migration";
 
 describe('DbClient', () => {
 
     const migrations: Array<IDbMigration> = [
-        {
-            async up(db): Promise<void> {
-                await db.createCollection('FirstCollection', {keyPath: '_id'});
-            },
-
-            async down(db): Promise<void> {
-                await db.dropCollection('FirstCollection');
-            }
-        },
-        {
-            async up(db): Promise<void> {
-                await db.createCollection('SecondCollection', {keyPath: '_id'});
-            },
-
-            async down(db): Promise<void> {
-                await db.dropCollection('SecondCollection');
-            }
-        }
+        generateMigration('FirstCollection'),
+        generateMigration('SecondCollection'),
     ];
 
     let dbClient: IDbClient;
@@ -35,11 +15,11 @@ describe('DbClient', () => {
         dbClient = new DbClient({dbName: 'TestDb', provider: IndexedDbProvider})
         db = new Db('TestDb', {migrations, client: dbClient});
         await db.open();
-    })
+    });
 
     test('Create database', async () => {
         expect(db.status).toBe(DbStatus.Opened);
-    })
+    });
 
     test('Collection created', async () => {
         let isCollectionCreated = await db.hasCollection('FirstCollection');
@@ -63,8 +43,6 @@ describe('DbClient', () => {
     test('Delete items', async () => {
         let items: ITestItem[];
         const collection = db.collection<ITestItem>('FirstCollection');
-
-
 
         await collection.insertOne({_id: '3', title: 'third row'});
         await collection.insertOne({_id: '4', title: 'forth row'});
