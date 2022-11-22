@@ -11,7 +11,7 @@
     "removeComments": true,
     "outDir": "./dist",
     "preserveConstEnums": true,
-    "rootDir": "./src",
+    "rootDirs": ["./src","./test"],
     "strict": true,
     "target": "es5",
     "allowSyntheticDefaultImports": true,

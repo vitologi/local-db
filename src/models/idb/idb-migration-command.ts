@@ -1,4 +1,5 @@
 import { IDbProvider, IDbProviderMigration } from "../../interfaces";
+import { extendTransactionCallback } from "./extend-transaction-callback";
 
 export enum CommandStatus {
   Pending = 'Pending',
@@ -34,8 +35,8 @@ export class IdbMigrationCommand {
       let isUpgradeMode = false;
       let isSuccessFired = false;
       const finalResolve = () => {
-        resolve();
         this.setStatus(CommandStatus.Completed);
+        resolve();
       }
 
       // old connection wasn't closed
@@ -73,15 +74,25 @@ export class IdbMigrationCommand {
         this.setIdb(idb);
         this.setTransaction(transaction);
 
+
+        if(transaction){
+          const setNull = () => this.setTransaction(null);
+          extendTransactionCallback(transaction, 'oncomplete', setNull);
+          extendTransactionCallback(transaction, 'onerror', setNull);
+          extendTransactionCallback(transaction, 'onabort', setNull);
+        }
+
         this.up()
           .then(() => {
-            console.log(`Db:${name} Version:${targetVersion} Status: migration base completed`);
+            // TODO: need to use logger
+            // console.log(`Db:${name} Version:${targetVersion} Status: migration base completed`);
             if (isSuccessFired) {
               finalResolve();
             }
           })
           .catch((err) => {
-            console.error(`Db:${name} Version:${targetVersion} Status: migration base error`, err);
+            // TODO: need to use logger
+            // console.error(`Db:${name} Version:${targetVersion} Status: migration base error`, err);
             if (transaction)
               transaction.abort();
             this.setStatus(CommandStatus.Canceled);
@@ -90,11 +101,6 @@ export class IdbMigrationCommand {
           })
           .finally(() => (isUpgradeMode = false));
 
-        if (transaction) {
-          transaction.oncomplete = () => {
-            this.setTransaction(null);
-          }
-        }
       };
     });
   }
