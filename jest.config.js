@@ -1,7 +1,7 @@
 /* eslint-disable */
 // See: https://jestjs.io/docs/en/configuration.html
 
-module.exports = {
+export default {
     collectCoverage: true,
     collectCoverageFrom: [
         "src/{models,utils}/**/*.ts",
