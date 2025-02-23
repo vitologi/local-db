@@ -1,6 +1,6 @@
 {
   "name": "@vitologi/local-db",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "Local database wrapper for IndexedDB",
   "type": "module",
   "main": "dist/cjs/index.js",
